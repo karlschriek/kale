@@ -106,11 +106,17 @@ def auto_generated_pipeline({%- for arg in parameters_names -%}
 
     volume_step_names.sort()
     volume_name_parameters.sort()
+    
+    from kfp.aws import use_aws_secret
+    aws_secret = use_aws_secret(
+        secret_name="aws-secret"
+    )
 
     {% for name in step_names %}
     {{ name }}_task = {{ name }}_op({{ all_step_parameters[name]|join(', ') }})\
                             .add_pvolumes(pvolumes_dict)\
                             .after({{ step_prevs[ name ]|join(', ') }})
+                            .apply(aws_secret)
     {%- if nb_graph.nodes(data=True)[name].get("annotations") %}
     step_annotations = {{ nb_graph.nodes(data=True)[name].get("annotations", {}) }}
     for k, v in step_annotations.items():
